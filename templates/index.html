@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask Data Read/Write</title>
+</head>
+<body>
+    <h1>Flask Data Read/Write</h1>
+    <form action="/write-data" method="post">
+        <label for="data">Data:</label><br>
+        <textarea id="data" name="data" rows="4" cols="50"></textarea><br>
+        <button type="submit">Write Data</button>
+    </form>
+    <h2>Read Data:</h2>
+    <p>{{ read_data() }}</p>
+</body>
+</html>
