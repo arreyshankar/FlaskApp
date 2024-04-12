@@ -2,6 +2,10 @@ from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
+@app.route('/')
+def index():
+    return 'dirty fellow'
+
 @app.route('/upload', methods=['POST'])
 def upload_file():
     # Check if the request contains a file
