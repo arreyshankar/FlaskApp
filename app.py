@@ -37,30 +37,40 @@ def load_images_from_directory(directory):
     for file in image_files:
         image_path = os.path.join(directory, file)
         image = face_recognition.load_image_file(image_path)
-        images.append(image)
+        images.append((image,file))
     return images
 
 @app.route('/recog', methods=['POST'])
 def compare_face():
     getImagesfromBlobStorage()
-    encoded_image = request.get_data()   
-    image = face_recognition.load_image_file(encoded_image)
-    image_face_encodings = face_recognition.face_encodings(image)
+    if 'image' not in request.files:
+        return jsonify({'error': 'No image file found'}), 400
 
-    if not image_face_encodings:
-        return jsonify({'match': False, 'matching_image': None})
+    uploaded_image = request.files['image']
+    uploaded_image_bytes = uploaded_image.read()
+    uploaded_image_array = face_recognition.load_image_file(uploaded_image_bytes)
 
     directory = "images"
     images = load_images_from_directory(directory)
 
-    for i, img in enumerate(images, start=1):
-        img_face_encodings = face_recognition.face_encodings(img)
-        if img_face_encodings:
-            match = face_recognition.compare_faces(img_face_encodings, image_face_encodings[0])
-            if match[0]:
-                return jsonify({'match': True, 'matching_image': f'image_{i}.jpg'})
+    uploaded_image_face_encodings = face_recognition.face_encodings(uploaded_image_array)
+    if not uploaded_image_face_encodings:
+        return jsonify({'error': 'No face found in the uploaded image'}), 400
 
-    return jsonify({'match': False, 'matching_image': None})
+    match_found = False
+    for image, filename in images:
+        image_face_encodings = face_recognition.face_encodings(image)
+        if image_face_encodings:
+            match = face_recognition.compare_faces(image_face_encodings, uploaded_image_face_encodings[0])
+            if match[0]:
+                match_found = True
+                result = {'match': True, 'filename': filename}
+                break
+
+    if match_found:
+        return jsonify(result), 200
+    else:
+        return jsonify({'match': False}), 200
 
 
 
