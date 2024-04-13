@@ -1,5 +1,6 @@
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, request, render_template, send_file
 import os
+import io
 from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
 import base64
 
@@ -22,6 +23,20 @@ def index():
         images.append(encoded_image)
     
     return render_template('index.html', images=images)
+
+@app.route('/ScanPatient',methods=['POST'])
+def scanpatient():
+    imageString = request.form.get('imageData')
+    if not imageString:
+        return jsonify({ 'error' : 'No image string provided' }), 400
+    
+    try:
+        imageData = base64.b64decode(imageString)
+        imageStream = io.BytesIO(imageData)
+        return send_file(imageStream,mimetype='image/jpeg')
+
+    except Exception as e:
+        return jsonify({ 'Exception' : str(e) }), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
