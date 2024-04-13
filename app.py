@@ -1,6 +1,10 @@
 from flask import Flask, jsonify, request, render_template, send_file
 import os
+import face_recognition
 import io
+import cv2
+import numpy as np
+from PIL import Image
 from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
 import base64
 
@@ -11,8 +15,9 @@ container_name = "patientimagess"
 blob_service_client = BlobServiceClient.from_connection_string(connect_str)
 container_client = blob_service_client.get_container_client(container_name)
 
+
 @app.route('/')
-def index():
+def getImages():
     blob_list = container_client.list_blobs()
     images = []
     for blob in blob_list:
@@ -22,20 +27,6 @@ def index():
         images.append(encoded_image)
     
     return render_template('index.html', images=images)
-
-@app.route('/ScanPatient',methods=['POST'])
-def scanpatient():
-    imageString = request.form.get('imageData')
-    if not imageString:
-        return jsonify({ 'error' : 'No image string provided' }), 400
-    
-    try:
-        imageData = base64.b64decode(imageString)
-        imageStream = io.BytesIO(imageData)
-        return send_file(imageStream,mimetype='image/jpeg')
-
-    except Exception as e:
-        return jsonify({ 'Exception' : str(e) }), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
