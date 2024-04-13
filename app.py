@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, render_template, send_file
+from flask import Flask, jsonify, request, render_template, send_file, Response
 import os
 import face_recognition
 import io
@@ -9,37 +9,96 @@ from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
 import base64
 
 app = Flask(__name__)
+directory = "images"
 
 connect_str = "DefaultEndpointsProtocol=https;AccountName=mevodrive;AccountKey=UKmeMgZao+Tn44MqV+lvNC1xUyN7x18469fXkxMSyW8geHPQXesKSgWv143dO4vhXbIuaD493SMw+AStQaMdBQ==;EndpointSuffix=core.windows.net"
 container_name = "patientimagess"
 blob_service_client = BlobServiceClient.from_connection_string(connect_str)
 container_client = blob_service_client.get_container_client(container_name)
 
-@app.route('/recog', methods=['POST'])
-def upload_file():
-    if 'file' not in request.files:
-        return 'No file part in the request', 400
-    file = request.files['file']
-    if file.filename == '':
-        return 'No selected file', 400
-    if not allowed_file(file.filename):
-        return 'File type not allowed', 400
-    #save_path = os.path.join(app.root_path, 'images', file.filename)
-    #file.save(save_path)
-    recognise(file)
-    return 'File uploaded successfully', 200
+BlobImages = []
+BlobImagesEncodings = []
+BlobImageNames = []
 
+def getImagesfromBlobStorage():
+    blob_list = container_client.list_blobs()
+    for blob in blob_list:
+        blob_client = container_client.get_blob_client(blob)
+        save_path = os.path.join(app.root_path, 'images', blob.name)
+        with open(save_path, "wb") as local_file:
+            blob_data = blob_client.download_blob().readall()
+            local_file.write(blob_data)
+            BlobImageNames.append(local_file.name)
+            BlobImages.append(local_file)
+
+def load_images_from_directory(directory):
+    image_files = [file for file in os.listdir(directory) if file.endswith(('jpg', 'jpeg', 'png'))]
+    images = []
+    for file in image_files:
+        image_path = os.path.join(directory, file)
+        image = face_recognition.load_image_file(image_path)
+        images.append(image)
+    return images
+
+@app.route('/recog', methods=['POST'])
+def compare_face():
+    getImagesfromBlobStorage()
+    encoded_image = request.get_data()   
+    image = face_recognition.load_image_file(encoded_image)
+    image_face_encodings = face_recognition.face_encodings(image)
+
+    if not image_face_encodings:
+        return jsonify({'match': False, 'matching_image': None})
+
+    directory = "images"
+    images = load_images_from_directory(directory)
+
+    for i, img in enumerate(images, start=1):
+        img_face_encodings = face_recognition.face_encodings(img)
+        if img_face_encodings:
+            match = face_recognition.compare_faces(img_face_encodings, image_face_encodings[0])
+            if match[0]:
+                return jsonify({'match': True, 'matching_image': f'image_{i}.jpg'})
+
+    return jsonify({'match': False, 'matching_image': None})
+
+
+
+
+
+''''
+    reference_image_file = request.files['reference_image']
+    print(reference_image_file)
+    reference_image = Image.open(reference_image_file)
+    reference_image = reference_image.convert('RGB')
+    reference_image_np = np.array(reference_image)
+
+    reference_face_locations = face_recognition.face_locations(reference_image_np)
+
+    if not reference_face_locations:
+        return jsonify({'error': 'No face detected in the reference image'})
+
+    reference_face_encodings = face_recognition.face_encodings(reference_image_np, reference_face_locations)
+
+    directory = 'images'
+
+    image_files = [file for file in os.listdir(directory) if file.endswith(('jpg', 'jpeg', 'png'))]
+    for i, file in enumerate(image_files, start=1):
+        image_path = os.path.join(directory, file)
+        image = face_recognition.load_image_file(image_path)
+        image_face_locations = face_recognition.face_locations(image)
+        if image_face_locations:
+            image_face_encodings = face_recognition.face_encodings(image, image_face_locations)
+            match = face_recognition.compare_faces(reference_face_encodings, image_face_encodings[0])
+            if match[0]:
+                return jsonify({'match': True, 'matching_image': file})
+
+    return jsonify({'match': False})
+
+    '''
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif','webp'}
 
-def recognise(image):
-    pass
-
-@app.route('/testing')
-def testing():
-    blob_list = container_client.list_blobs()
-    
-    return 'yes'+blob_list , 200
 
 @app.route('/')
 def getImages():
