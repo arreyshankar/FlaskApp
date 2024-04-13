@@ -1,2 +1,2 @@
 Flask
-face_recognition
+azure-storage-blob

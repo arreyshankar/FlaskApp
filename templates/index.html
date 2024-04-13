@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Images from Azure Blob Storage</title>
+</head>
+<body>
+    <h1>Images from Azure Blob Storage</h1>
+    {% for image in images %}
+        <img src="data:image/jpeg;base64,{{ image }}" alt="Image" />
+    {% endfor %}
+</body>
+</html>
