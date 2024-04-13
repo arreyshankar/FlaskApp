@@ -12,6 +12,12 @@ container_name = "patientimagess"
 blob_service_client = BlobServiceClient.from_connection_string(connect_str)
 container_client = blob_service_client.get_container_client(container_name)
 
+connect_str = "DefaultEndpointsProtocol=https;AccountName=mevodrive;AccountKey=UKmeMgZao+Tn44MqV+lvNC1xUyN7x18469fXkxMSyW8geHPQXesKSgWv143dO4vhXbIuaD493SMw+AStQaMdBQ==;EndpointSuffix=core.windows.net"
+container_name = "patientimagess"
+
+blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+container_client = blob_service_client.get_container_client(container_name)
+
 @app.route('/')
 def index():
     blob_list = container_client.list_blobs()
