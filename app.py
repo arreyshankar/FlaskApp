@@ -15,6 +15,31 @@ container_name = "patientimagess"
 blob_service_client = BlobServiceClient.from_connection_string(connect_str)
 container_client = blob_service_client.get_container_client(container_name)
 
+@app.route('/recog', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return 'No file part in the request', 400
+    file = request.files['file']
+    if file.filename == '':
+        return 'No selected file', 400
+    if not allowed_file(file.filename):
+        return 'File type not allowed', 400
+    #save_path = os.path.join(app.root_path, 'images', file.filename)
+    #file.save(save_path)
+    recognise(file)
+    return 'File uploaded successfully', 200
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif','webp'}
+
+def recognise(image):
+    pass
+
+@app.route('/testing')
+def testing():
+    blob_list = container_client.list_blobs()
+    
+    return 'yes'+blob_list , 200
 
 @app.route('/')
 def getImages():

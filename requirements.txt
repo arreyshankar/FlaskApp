@@ -1,2 +1,4 @@
 Flask
 azure-storage-blob
+opencv-python
+face_recognition
