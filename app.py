@@ -43,13 +43,13 @@ def load_images_from_directory(directory):
 @app.route('/recog', methods=['POST'])
 def compare_face():
     getImagesfromBlobStorage()
-
-    data = request.json
-    base64image = data['image']
-    image_bytes = base64.b64decode(base64image)
-    with open('reference_image.jpg', 'wb') as f:
-        f.write(image_bytes)
-    
+    if 'reference_image' not in request.files:
+        return 'No file part'
+    reference_image_file = request.files['reference_image']
+    if reference_image_file.filename == '':
+        return 'No selected file'
+    print(reference_image_file)
+    reference_image_file.save('reference_image.jpg')
     reference_image = Image.open('reference_image.jpg')
     reference_image = reference_image.convert('RGB')
     reference_image_np = np.array(reference_image)
