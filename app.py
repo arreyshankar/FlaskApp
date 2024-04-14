@@ -49,7 +49,8 @@ def compare_face():
     if reference_image_file.filename == '':
         return 'No selected file'
     print(reference_image_file)
-    reference_image = Image.open(reference_image_file)
+    reference_image_file.save('reference_image.jpg')
+    reference_image = Image.open('reference_image.jpg')
     reference_image = reference_image.convert('RGB')
     reference_image_np = np.array(reference_image)
     print(reference_image_np)
