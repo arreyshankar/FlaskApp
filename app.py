@@ -43,8 +43,11 @@ def load_images_from_directory(directory):
 @app.route('/recog', methods=['POST'])
 def compare_face():
     getImagesfromBlobStorage()
-    
+    if 'reference_image' not in request.files:
+        return 'No file part'
     reference_image_file = request.files['reference_image']
+    if reference_image_file.filename == '':
+        return 'No selected file'
     print(reference_image_file)
     reference_image = Image.open(reference_image_file)
     reference_image = reference_image.convert('RGB')
