@@ -43,46 +43,13 @@ def load_images_from_directory(directory):
 @app.route('/recog', methods=['POST'])
 def compare_face():
     getImagesfromBlobStorage()
-    if 'image' not in request.files:
-        return jsonify({'error': 'No image file found'}), 400
-
-    uploaded_image = request.files['image']
-    uploaded_image_bytes = uploaded_image.read()
-    uploaded_image_array = face_recognition.load_image_file(uploaded_image_bytes)
-
-    directory = "images"
-    images = load_images_from_directory(directory)
-
-    uploaded_image_face_encodings = face_recognition.face_encodings(uploaded_image_array)
-    if not uploaded_image_face_encodings:
-        return jsonify({'error': 'No face found in the uploaded image'}), 400
-
-    match_found = False
-    for image, filename in images:
-        image_face_encodings = face_recognition.face_encodings(image)
-        if image_face_encodings:
-            match = face_recognition.compare_faces(image_face_encodings, uploaded_image_face_encodings[0])
-            if match[0]:
-                match_found = True
-                result = {'match': True, 'filename': filename}
-                break
-
-    if match_found:
-        return jsonify(result), 200
-    else:
-        return jsonify({'match': False}), 200
-
-
-
-
-
-''''
+    
     reference_image_file = request.files['reference_image']
     print(reference_image_file)
     reference_image = Image.open(reference_image_file)
     reference_image = reference_image.convert('RGB')
     reference_image_np = np.array(reference_image)
-
+    print(reference_image_np)
     reference_face_locations = face_recognition.face_locations(reference_image_np)
 
     if not reference_face_locations:
@@ -105,7 +72,7 @@ def compare_face():
 
     return jsonify({'match': False})
 
-    '''
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif','webp'}
 
