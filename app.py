@@ -1,8 +1,6 @@
 from flask import Flask, jsonify, request, render_template, send_file, Response
 import os
 import face_recognition
-import io
-import cv2
 import numpy as np
 from PIL import Image
 from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
