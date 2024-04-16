@@ -165,9 +165,10 @@ def getPatients():
 @app.post('/AddPatient')
 def addPatient():
     patient = request.get_json()
+    patient['_id'] = None
     result = PatientsCollection.insert_one(patient)
     print("A Patient document was inserted with the _id: ",result.inserted_id)
-    output_file = 'images/' + patient['PatientName'] + '_' + result.inserted_id + '.jpg'
+    output_file = 'images/' + patient['PatientName'] + '_' + str(result.inserted_id) + '.jpg'
     save_base64_as_jpg(patient['PatientImage'],output_file)
     print("Image saved as: ",output_file)
     obj = { "message" : "Patient Added Successfully" }
@@ -198,6 +199,12 @@ def DeletePatient():
     else:
         obj = { 'message' : 'Error while Deleting' }
         return jsonify(obj),400
+
+@app.get('/GetPatientDetail')
+def getPatientDetail():
+    patient = request.get_json()
+    result = PatientsCollection.find_one(patient)
+    return jsonify(result)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
