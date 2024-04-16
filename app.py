@@ -4,6 +4,7 @@ import face_recognition
 from werkzeug.security import generate_password_hash, check_password_hash
 from pymongo import MongoClient
 import numpy as np
+from bson.objectid import ObjectId
 from PIL import Image
 from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
 import base64
@@ -59,7 +60,6 @@ def load_images_from_directory(directory):
 
 @app.route('/recog', methods=['POST'])
 def compare_face():
-    getImagesfromBlobStorage()
     if 'reference_image' not in request.files:
         return 'No file part'
     reference_image_file = request.files['reference_image']
@@ -87,7 +87,19 @@ def compare_face():
             image_face_encodings = face_recognition.face_encodings(image, image_face_locations)
             match = face_recognition.compare_faces(reference_face_encodings, image_face_encodings[0])
             if match[0]:
-                return jsonify({'match': True, 'matching_image': file})
+                filename = os.path.basename(file)
+                underscore_index = filename.find('_')
+                if underscore_index == -1:
+                    return None 
+    
+                extension_index = filename.find('.jpg')
+                if extension_index == -1:
+                    return None  
+
+                patientID = filename[underscore_index + 1:extension_index]
+                result = PatientsCollection.find_one({ "_id" : ObjectId(patientID) })
+                result['_id'] = str(result['_id'])
+                return jsonify(result) ,200
 
     return jsonify({'match': False})
 
@@ -165,7 +177,7 @@ def getPatients():
 @app.post('/AddPatient')
 def addPatient():
     patient = request.get_json()
-    patient['_id'] = None
+    patient['_id'] = ObjectId()
     result = PatientsCollection.insert_one(patient)
     print("A Patient document was inserted with the _id: ",result.inserted_id)
     output_file = 'images/' + patient['PatientName'] + '_' + str(result.inserted_id) + '.jpg'
@@ -191,20 +203,26 @@ def addMedicine():
 @app.post('/DeletePatient')
 def DeletePatient():
     patient = request.get_json()
-    result = PatientsCollection.delete_one(patient)
+    result = PatientsCollection.delete_one({ "_id" : ObjectId(patient['_id']) })
     if result.deleted_count > 0:
         print("A patient document was deleted with the id: ",patient['_id'])
+        filepath = "images/" + patient['PatientName']+ '_' + str(patient['_id']) + '.jpg'
+        os.remove(filepath)
         obj = { 'message' : 'Patient Deleted Successfully' }
         return jsonify(obj),200
     else:
         obj = { 'message' : 'Error while Deleting' }
         return jsonify(obj),400
 
-@app.get('/GetPatientDetail')
-def getPatientDetail():
-    patient = request.get_json()
-    result = PatientsCollection.find_one(patient)
-    return jsonify(result)
+@app.post('/EditRoom')
+def editRoom():
+    room = request.get_json()
+    filter_criteria = {'roomNo': result['roomNo']}  
+    update_operation = {'$set': {'isAvailable': result['isAvailable'] }}
+    print("A Room document was updated by Room No: ",room['roomNo'])
+    result = RoomsCollection.update_one(filter_criteria,update_operation)
+    obj = { "message" : "Room Updated" }
+    return jsonify(obj),200
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
