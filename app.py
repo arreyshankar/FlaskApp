@@ -183,7 +183,7 @@ def addPatient():
     output_file = 'images/' + patient['PatientName'] + '_' + str(result.inserted_id) + '.jpg'
     save_base64_as_jpg(patient['PatientImage'],output_file)
     print("Image saved as: ",output_file)
-    obj = { "message" : "Patient Added Successfully" }
+    obj = { "insertedID" : str(result.inserted_id) }
     return jsonify(obj),200
 
 @app.get('/GetMedicines')
@@ -222,6 +222,37 @@ def editRoom():
     print("A Room document was updated by Room No: ",room['roomNo'])
     result = RoomsCollection.update_one(filter_criteria,update_operation)
     obj = { "message" : "Room Updated" }
+    return jsonify(obj),200
+
+@app.post('/GetPatientByID')
+def getPatientByID():
+    patient = request.get_json()
+    id = patient['_id']
+    result = PatientsCollection.find_one({ "_id" : ObjectId(id) })
+    result['_id'] = str(result['_id'])
+    return jsonify(result),200
+
+@app.post('/GetDoctorByID')
+def getDoctorByID():
+    doctor = request.get_json()
+    id = doctor['_id']
+    result = DoctorsCollection.find_one({ "_id" : ObjectId(id) })
+    result['_id'] = str(result['_id'])
+    return jsonify(result),200
+
+@app.post('/GetRoomByID')
+def getRoomByID():
+    room = request.get_json()
+    id = room['_id']
+    result = RoomsCollection.find_one({ "_id" : ObjectId(id) })
+    result['_id'] = str(result['_id'])
+    return jsonify(result),200
+
+@app.post('/InPatient')
+def inPatient():
+    admission_details = request.get_json
+    print(admission_details)
+    obj = { "MFS" : "working"}
     return jsonify(obj),200
 
 if __name__ == '__main__':
