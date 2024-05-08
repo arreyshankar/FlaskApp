@@ -141,6 +141,17 @@ def getDoctors():
         doc['_id'] = str(doc['_id'])
     return jsonify(result)
 
+@app.post('/AddRoom')
+def addRoom():
+    room = request.get_json()
+    result = RoomsCollection.insert_one(room)
+    print('A Room document was inserted with the _id:',result.inserted_id)
+    if result:
+        obj = {'insertedID' : str(result.inserted_id)}
+        return jsonify(obj)
+    else:
+        return jsonify({'message' : 'error adding room'})
+
 @app.get('/GetRooms')
 def getRooms():
     result = list(RoomsCollection.find())
